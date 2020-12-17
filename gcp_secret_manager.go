@@ -24,18 +24,15 @@ const GooglePrivateEndpoint = "private.googleapis.com:443"
 // https://cloud.google.com/secret-manager/docs/reference/rest/v1/projects.secrets/get
 const oauth2scope = "https://www.googleapis.com/auth/cloud-platform"
 
-// GCP SecretManager implementation of VaultClient
+// GCP SecretManager client implementation
 type GCPVaultClient struct {
-	client *secretmanager.Client
+	ProjectID string
 
-	projectID string
+	client *secretmanager.Client
 }
 
-// Returns instance of VaultClient with GCP SecretManager as backend
+// Returns instance of client
 func NewGCPVaultClient(ctx context.Context, projectID string, usePrivateEndpoint bool) (*GCPVaultClient, error) {
-
-	client := new(GCPVaultClient)
-	client.projectID = projectID
 
 	// https://pkg.go.dev/google.golang.org/api/option#ClientOption
 	clientOptions := []gcpopt.ClientOption{}
@@ -68,15 +65,20 @@ func NewGCPVaultClient(ctx context.Context, projectID string, usePrivateEndpoint
 		oauth2ctx := context.WithValue(ctx, oauth2.HTTPClient, oauth2httpClient)
 		oauth2tokenSource, err := oauth2google.DefaultTokenSource(oauth2ctx, oauth2scope)
 		if err != nil {
-			return client, err
+			return nil, err
 		}
 
 		// Add Secret Manager client option to use custom token source.
 		clientOptions = append(clientOptions, gcpopt.WithTokenSource(oauth2tokenSource))
 	}
 
-	var err error
-	client.client, err = secretmanager.NewClient(ctx, clientOptions...)
+	// create client
+	smclient, err := secretmanager.NewClient(ctx, clientOptions...)
+
+	client := &GCPVaultClient{
+		ProjectID: projectID,
+		client:    smclient,
+	}
 
 	return client, err
 }
@@ -85,7 +87,7 @@ func NewGCPVaultClient(ctx context.Context, projectID string, usePrivateEndpoint
 func (c *GCPVaultClient) GetSecret(ctx context.Context, name string) ([]byte, error) {
 
 	// Сomplete id of the secret.
-	secretId := fmt.Sprintf(`projects/%s/secrets/%s/versions/latest`, c.projectID, name)
+	secretId := fmt.Sprintf(`projects/%s/secrets/%s/versions/latest`, c.ProjectID, name)
 
 	// Build request body.
 	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{Name: secretId}
@@ -107,7 +109,7 @@ func (c *GCPVaultClient) Close() error {
 // This is a DialContext implementation which replaces any address with GCP Private API Endpoint.
 func dialContextPrivateAPI(ctx context.Context, network, address string) (net.Conn, error) {
 	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
+		Timeout:   60 * time.Second,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
