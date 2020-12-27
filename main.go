@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,36 +16,25 @@ func main() {
 	processCtx, processCancel := context.WithCancel(context.Background())
 	defer processCancel()
 
-	// run process in the background, it will pass response into chan
-	responseChan := make(chan *Response, 1)
+	// run process in the background, it will pass exit code into chan
+	exitCodeChan := make(chan int, 1)
 	go func() {
-		responseChan <- process(processCtx)
+		exitCodeChan <- process(processCtx)
 	}()
 
-	// wait for stop signal from system or for response from process
-	var response *Response
+	// wait for stop signal from system or for finish of process
+	var exitCode int
 	select {
-	case sig := <-termChan:
+	case <-termChan:
+		// if signal received from OS, cancel process and wait for it to finish
 		processCancel()
-		// wait until process returns
-		<-responseChan
-		response = &Response{Msg: fmt.Sprintf("Received OS signal %s. Cancelled", sig.String()), Failed: true}
-	case r := <-responseChan:
-		response = r
+		<-exitCodeChan
+		exitCode = 143
+	case c := <-exitCodeChan:
+		exitCode = c
 		// process finished, no need to cancel it
 	}
 
-	// print response to stdout
-	text, err := json.Marshal(response)
-	if err != nil {
-		text, _ = json.Marshal(Response{Msg: "Invalid response object"})
-	}
-	fmt.Println(string(text))
-
 	// exit program
-	if response.Failed {
-		os.Exit(1)
-	} else {
-		os.Exit(0)
-	}
+	os.Exit(exitCode)
 }
