@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const defaultCredsPath = "/tmp/rc_gcp_vault_secret_creds.json"
+const defaultCredsPath = "/tmp/.ansible/gcp_vault_secret_creds.json"
 
 // Input params provided by ansible
 type ModuleArgs struct {
