@@ -15,7 +15,7 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-// We are going to override default endpoint if GCP_USE_PRIVATE_API_ENDPOINT=true.
+// We are going to override default endpoint if usePrivateEndpoint=true.
 // This is needed if you want to route all requests to private Google API subnet
 // BGP routed via your VPN tunnels.
 const GooglePrivateEndpoint = "private.googleapis.com:443"
