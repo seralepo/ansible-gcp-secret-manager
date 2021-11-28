@@ -96,6 +96,14 @@ func produceResponse(ctx context.Context) *Response {
 		moduleArgs.CredentialsFile = defaultCredsPath
 	}
 
+	if moduleArgs.CredentialsFile == "system" {
+		moduleArgs.CredentialsFile = "system"
+	}
+
+	if moduleArgs.CredentialsFile == "system" && moduleArgs.ProjectID == "" {
+		return response.WithErrorf("Project ID is required when system is used for credentials.")
+	}
+
 	// If 'project_id' is empty, try using one from credentials file
 	if moduleArgs.ProjectID == "" {
 		// Read credentials file
@@ -118,10 +126,13 @@ func produceResponse(ctx context.Context) *Response {
 		}
 
 		moduleArgs.ProjectID = creds.ProjectID
+
 	}
 
 	// Set path to credentials file
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", moduleArgs.CredentialsFile)
+	if moduleArgs.CredentialsFile != "system" {
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", moduleArgs.CredentialsFile)
+	}
 
 	// Create Google Secret Manager Client
 	client, err := NewGCPVaultClient(ctx, moduleArgs.ProjectID, moduleArgs.UsePrivateGoogleAPIEndpoint)
