@@ -27,6 +27,7 @@ go build -x -o $HOME/.ansible/plugins/modules/gcp_vault_secret .
 
 Example of usage in a playbook (for this example you will need to export `GOOGLE_APPLICATION_CREDENTIALS` variable with local path to Google API creds file on your local host):
 ```yaml
+---
 - name: Test module gcp_vault_secret
   tasks:
     - name: Copy GCP credentials file to remote host
@@ -52,14 +53,22 @@ Example of usage in a playbook (for this example you will need to export `GOOGLE
 
 This is an example where the default service account on a system has read access to secret manager.
 ```yaml
---- 
-- name: Test System Service Account
-  gcp_vault_secret:
-    name: "my-secret-name"
-    private_google_api_endpoint: yes
-    creds_file: "system"
-    project_id: "gcp-project-name"
-  register: my_secret_value
+---
+- name: Test module gcp_vault_secret
+  tasks:
+
+  - name: Use default VM service account
+    gcp_vault_secret:
+      name: "my-secret-name"
+      private_google_api_endpoint: yes
+      creds_file: "system"
+      project_id: "gcp-project-name"
+    register: ssl_private_key
+
+  - name: Save secret key to disk
+    copy:
+      content: "{{ ssl_private_key.data }}\n"
+      dest: /etc/pki/tls/private/ssl.key
 ```
 ## Return Values
 
