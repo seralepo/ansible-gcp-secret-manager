@@ -56,7 +56,6 @@ This is an example where the default service account on a system has read access
 ---
 - name: Test module gcp_vault_secret
   tasks:
-
   - name: Use default VM service account
     gcp_vault_secret:
       name: "my-secret-name"
