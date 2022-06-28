@@ -27,7 +27,6 @@ go build -x -o $HOME/.ansible/plugins/modules/gcp_vault_secret .
 
 Example of usage in a playbook (for this example you will need to export `GOOGLE_APPLICATION_CREDENTIALS` variable with local path to Google API creds file on your local host):
 ```yaml
----
 - name: Test module gcp_vault_secret
   tasks:
     - name: Copy GCP credentials file to remote host
