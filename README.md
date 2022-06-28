@@ -18,8 +18,8 @@ go build -x -o $HOME/.ansible/plugins/modules/gcp_vault_secret .
 | parameter | required | default | choices | comments |
 |-----------|----------|---------|---------|----------|
 | name      | yes      | None    |         | Name of the secret in GCP Secret Manager |
-| creds_file | no      | /tmp/.ansible/gcp_vault_secret_creds.json    |         | Path to Google API credentials file on remote filesystem | 
-| project_id | no      | taken from creds_file |         | Name of the GCP Project where Secret Manager resides |
+| creds_file | no      | /tmp/.ansible/gcp_vault_secret_creds.json    |   , file path or "system"      | Path to Google API credentials file on remote filesystem | 
+| project_id | no      | taken from creds_file, specify if "system" is used |         | Name of the GCP Project where Secret Manager resides |
 | private_google_api_endpoint      | no      | no    |    yes/no     | Make all requests to Google API via privately routed endpoint (private.googleapis.com:443) | 
 
 
@@ -49,6 +49,19 @@ Example of usage in a playbook (for this example you will need to export `GOOGLE
         dest: /etc/pki/tls/private/ssl.key
 ```
 
+## System Example
+
+This is an example where the default service account on a system has read access to secret manager.
+```yaml
+--- 
+- name: Test System Service Account
+  gcp_vault_secret:
+    name: "my-secret-name"
+    private_google_api_endpoint: yes
+    creds_file: "system"
+    project_id: "gcp-project-name"
+  register: my_secret_value
+```
 ## Return Values
 
 | name | description | type | sample |
